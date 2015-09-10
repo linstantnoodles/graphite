@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+       </head>
+    <body>
+        <svg id="mysvg" width="500px" height="500px" xmlns="http://www.w3.org/2000/svg">
+        </svg>
+     <script>
+
+            // Dot painter
+            var svgEl = document.getElementById("mysvg");
+            function drawCircle (x, y) {
+                console.log(x);
+                console.log(y);
+                var C= document.createElementNS("http://www.w3.org/2000/svg","circle");
+                C.setAttributeNS(null,"r", 5);
+                C.setAttributeNS(null,"cx", x);
+                C.setAttributeNS(null,"cy", y);
+                C.setAttributeNS(null,"stroke", "red");
+                svgEl.appendChild(C);
+            }
+
+            function drawLine (origin, width, orientation, strokeWidth) {
+                strokeWidth = strokeWidth || 1;
+                if (orientation === "horizontal") {
+                    var C= document.createElementNS("http://www.w3.org/2000/svg","line");
+                    C.setAttributeNS(null,"x1", origin.x);
+                    C.setAttributeNS(null,"y1", origin.y);
+                    C.setAttributeNS(null,"x2", origin.x + width);
+                    C.setAttributeNS(null,"y2", origin.y);
+                    C.setAttributeNS(null,"stroke", "black");
+                    C.setAttributeNS(null,"stroke-width", strokeWidth);
+                    svgEl.appendChild(C);
+                } else {
+                    // Origin begins at tail
+                    var C= document.createElementNS("http://www.w3.org/2000/svg","line");
+                    C.setAttributeNS(null,"x1", origin.x);
+                    C.setAttributeNS(null,"y1", origin.y);
+                    C.setAttributeNS(null,"x2", origin.x);
+                    C.setAttributeNS(null,"y2", origin.y + width);
+                    C.setAttributeNS(null,"stroke", "black");
+                    C.setAttributeNS(null,"stroke-width", strokeWidth);
+                    svgEl.appendChild(C);
+                }
+            }
+
+            function drawPath (points) {
+                var C= document.createElementNS("http://www.w3.org/2000/svg","path");
+                var initialPoint = points[0];
+                var pathString = "M " + initialPoint.x + " " + initialPoint.y + " L ";
+                for (var i = 1; i < points.length; i++) {
+                    pathString += points[i].x + " " + points[i].y + " ";
+                }
+                C.setAttributeNS(null,"stroke", "red");
+                C.setAttributeNS(null, "d", pathString);
+                C.setAttributeNS(null, "fill", "none");
+                svgEl.appendChild(C);
+            }
+
+            var Axis = function (config) {
+                this.x = config.x;
+                this.y = config.y;
+                this.width = config.width;
+                this.values = config.values || [];
+                this.orientation = config.orientation; // horizontal or vertical
+                this.minmax = config.minmax;
+                var gapSize = Math.floor(this.width / (this.getMax() - this.getMin()));
+                var diff = this.width - (gapSize * (this.getMax() - this.getMin()));
+                // Since some may not evenly divide the max may not always be at the end
+                var lineWidth = this.width - diff;
+                this.gapSize = gapSize;
+                this.lineWidth = lineWidth;
+            };
+
+            Axis.prototype.getLineWidth = function () {
+                return this.lineWidth;
+            };
+
+            Axis.prototype.valuePos = function (origin, value) {
+                var distanceFromOrigin = (value - this.getMin()) * this.gapSize;
+                if (this.orientation === "horizontal") {
+                    var posX = origin.x + distanceFromOrigin;
+                    return {x: posX, y: origin.y};
+                } else {
+                    var posY = (origin.y + this.lineWidth) - distanceFromOrigin;
+                    return {x: origin.x, y: posY};
+                }
+            };
+
+            Axis.prototype.draw = function (drawPoint) {
+                drawLine({x: this.x, y: this.y}, this.lineWidth, this.orientation);
+                for (var i = 0; i < this.values.length; i++) {
+                    var value = this.values[i];
+                    var pos = this.valuePos(drawPoint, value);
+                    drawCircle(pos.x, pos.y);
+                }
+            };
+
+            Axis.prototype.getMin = function () {
+                if (this.minmax) {
+                    return this.minmax.min;
+                }
+                return Math.min.apply(null, this.values);
+            };
+
+            Axis.prototype.getMax = function () {
+                if (this.minmax) {
+                    return this.minmax.max;
+                }
+                return Math.max.apply(null, this.values);
+            };
+
+            var CartesianCoordinate = function (config) {
+                this.x = config.x;
+                this.y = config.y;
+                this.xWidth = config.x_width;
+                this.yWidth = config.y_width;
+                this.xMinmax = config.x_minmax;
+                this.yMinmax = config.y_minmax;
+                this.origin = config.origin;
+                this.xAxis = new Axis({
+                    width: this.xWidth, 
+                    orientation: "horizontal",
+                    minmax: this.xMinmax
+                });
+                this.yAxis = new Axis({
+                    width: this.yWidth,
+                    orientation: "vertical",
+                    minmax: this.yMinmax
+                });
+                this.yAxis.x = this.xAxis.valuePos({
+                    x: this.x, 
+                    y: this.y
+                }, this.origin.x).x;
+                this.yAxis.y = this.y;
+                this.xAxis.x = this.x;
+                this.xAxis.y = this.yAxis.valuePos({
+                    x: this.x, 
+                    y: this.y
+                }, this.origin.y).y;
+            };
+
+            CartesianCoordinate.prototype.drawGrid = function () {
+                var yMin = this.yAxis.getMin();
+                var yMax = this.yAxis.getMax();
+                for (var i = yMin; i <= yMax; i++) {
+                    drawLine({
+                        x: this.x, 
+                        y: this.yAxis.valuePos({
+                            x: this.x, 
+                            y: this.y
+                        }, i).y
+                    }, this.xAxis.getLineWidth(), "horizontal", 0.5);
+                }
+                var xMin = this.xAxis.getMin();
+                var xMax = this.xAxis.getMax();
+                for (var i = xMin; i <= xMax; i++) {
+                    drawLine({
+                        x: this.xAxis.valuePos({
+                            x: this.x, 
+                            y: this.y
+                        }, i).x,
+                        y: this.y, 
+                    }, this.yAxis.getLineWidth(), "vertical", 0.5);
+                }
+            };
+
+            CartesianCoordinate.prototype.draw = function (points) {
+                this.xAxis.draw();
+                this.yAxis.draw();
+                this.drawGrid();
+                this.drawPath(points);
+            }
+
+            CartesianCoordinate.prototype.drawPoints = function (points) {
+                for (var i = 0; i < points.length; i++) {
+                    var point = points[i];
+                    var xPos = this.xAxis.valuePos({x: this.x, y: this.y}, point.x).x;
+                    var yPos = this.yAxis.valuePos({x: this.x, y: this.y}, point.y).y;
+                    drawCircle(xPos, yPos);
+                }
+
+            };
+
+            CartesianCoordinate.prototype.drawPath = function (points) {
+                var coordinates = [];
+                for (var i = 0; i < points.length; i++) {
+                    var point = points[i];
+                    var xPos = this.xAxis.valuePos({x: this.x, y: this.y}, point.x).x;
+                    var yPos = this.yAxis.valuePos({x: this.x, y: this.y}, point.y).y;
+                    coordinates.push({x: xPos, y: yPos});
+                }
+                drawPath(coordinates);
+            }; 
+
+            var cartesianConfig = {
+                x: 30,
+                y: 50,
+                x_width: 400,
+                y_width: 300,
+                x_minmax: {min: -5, max: 5},
+                y_minmax: {min: -5, max: 5},
+                origin: {x: 0, y: 0}
+            };
+
+            var x = new CartesianCoordinate(cartesianConfig);
+
+            x.draw([
+                {x: 1, y: 2},
+                {x: -5, y: 2}, 
+                {x: 3, y: 3},
+                {x: 3, y: 5}
+            ]);
+        </script>
+    </body>
+</html>
+        
