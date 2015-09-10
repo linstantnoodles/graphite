@@ -4,7 +4,7 @@
         <meta charset="utf-8">
        </head>
     <body>
-        <svg id="mysvg" width="500px" height="500px" xmlns="http://www.w3.org/2000/svg">
+        <svg id="mysvg" width="1000px" height="1000px" xmlns="http://www.w3.org/2000/svg">
         </svg>
      <script>
 
@@ -64,7 +64,7 @@
                 this.width = config.width;
                 this.values = config.values || [];
                 this.orientation = config.orientation; // horizontal or vertical
-                this.minmax = config.minmax;
+                this.range = config.range;
                 var gapSize = Math.floor(this.width / (this.getMax() - this.getMin()));
                 var diff = this.width - (gapSize * (this.getMax() - this.getMin()));
                 // Since some may not evenly divide the max may not always be at the end
@@ -88,27 +88,22 @@
                 }
             };
 
-            Axis.prototype.draw = function (drawPoint) {
+            Axis.prototype.draw = function (values) {
+                values = values || [];
                 drawLine({x: this.x, y: this.y}, this.lineWidth, this.orientation);
-                for (var i = 0; i < this.values.length; i++) {
+                for (var i = 0; i < values.length; i++) {
                     var value = this.values[i];
-                    var pos = this.valuePos(drawPoint, value);
+                    var pos = this.valuePos({x: this.x, y: this.y}, value);
                     drawCircle(pos.x, pos.y);
                 }
             };
 
             Axis.prototype.getMin = function () {
-                if (this.minmax) {
-                    return this.minmax.min;
-                }
-                return Math.min.apply(null, this.values);
+                return (this.range) ? this.range.min : Math.min.apply(null, this.values);
             };
 
             Axis.prototype.getMax = function () {
-                if (this.minmax) {
-                    return this.minmax.max;
-                }
-                return Math.max.apply(null, this.values);
+                return (this.range) ? this.range.max : Math.max.apply(null, this.values);
             };
 
             var CartesianCoordinate = function (config) {
@@ -116,18 +111,18 @@
                 this.y = config.y;
                 this.xWidth = config.x_width;
                 this.yWidth = config.y_width;
-                this.xMinmax = config.x_minmax;
-                this.yMinmax = config.y_minmax;
+                this.xRange = config.x_range;
+                this.yRange = config.y_range;
                 this.origin = config.origin;
                 this.xAxis = new Axis({
                     width: this.xWidth, 
                     orientation: "horizontal",
-                    minmax: this.xMinmax
+                    range: this.xRange
                 });
                 this.yAxis = new Axis({
                     width: this.yWidth,
                     orientation: "vertical",
-                    minmax: this.yMinmax
+                    range: this.yRange
                 });
                 this.yAxis.x = this.xAxis.valuePos({
                     x: this.x, 
@@ -195,12 +190,12 @@
             }; 
 
             var cartesianConfig = {
-                x: 30,
-                y: 50,
-                x_width: 400,
+                x: 10,
+                y: 10,
+                x_width: 300,
                 y_width: 300,
-                x_minmax: {min: -5, max: 5},
-                y_minmax: {min: -5, max: 5},
+                x_range: {min: -5, max: 5},
+                y_range: {min: -5, max: 5},
                 origin: {x: 0, y: 0}
             };
 
@@ -208,9 +203,9 @@
 
             x.draw([
                 {x: 1, y: 2},
-                {x: -5, y: 2}, 
+                {x: 2, y: 2.5}, 
                 {x: 3, y: 3},
-                {x: 3, y: 5}
+                {x: 4, y: 5}
             ]);
         </script>
     </body>
