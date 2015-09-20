@@ -88,13 +88,13 @@
                 return (this.range) ? this.range.max : Math.max.apply(null, this.values);
             };
 
-            var XAxis = function (config) {
+            var PolarXCoordinate = function (config) {
                 Axis.call(this, config);
             };
 
-            XAxis.prototype = Object.create(Axis.prototype);
+            PolarXCoordinate.prototype = Object.create(Axis.prototype);
 
-            XAxis.prototype.draw = function (values) {
+            PolarXCoordinate.prototype.draw = function (values) {
                 values = values || [];
                 canvas.line({
                     x1: this.x, 
@@ -110,7 +110,7 @@
 
             };
 
-            XAxis.prototype.getValuePosition = function (origin, value) {
+            PolarXCoordinate.prototype.getValuePosition = function (origin, value) {
                 var posX = origin.x + this.getDistanceFromOrigin(value);
                 return {
                     x: posX,
@@ -118,13 +118,13 @@
                 };
             };
 
-            var YAxis = function (config) {
+            var PolarYCoordinate = function (config) {
                 Axis.call(this, config);
             };
 
-            YAxis.prototype = Object.create(Axis.prototype);
+            PolarYCoordinate.prototype = Object.create(Axis.prototype);
 
-            YAxis.prototype.draw = function (values) {
+            PolarYCoordinate.prototype.draw = function (values) {
                 values = values || [];
                 canvas.line({
                     x1: this.x,
@@ -139,7 +139,7 @@
                 }
             };
 
-            YAxis.prototype.getValuePosition = function (origin, value) {
+            PolarYCoordinate.prototype.getValuePosition = function (origin, value) {
                 var posY = (origin.y + this.getLineWidth()) - this.getDistanceFromOrigin(value);
                 return {x: origin.x, y: posY};
             };
@@ -152,46 +152,46 @@
                 this.xRange = config.x_range;
                 this.yRange = config.y_range;
                 this.origin = config.origin;
-                this.xAxis = new XAxis({
+                this.xCoordinate = new PolarXCoordinate({
                     width: this.xWidth, 
                     range: this.xRange
                 });
-                this.yAxis = new YAxis({
+                this.yCoordinate = new PolarYCoordinate({
                     width: this.yWidth,
                     range: this.yRange
                 });
-                this.yAxis.x = this.xAxis.getValuePosition({
+                this.yCoordinate.x = this.xCoordinate.getValuePosition({
                     x: this.x, 
                     y: this.y
                 }, this.origin.x).x;
-                this.yAxis.y = this.y;
-                this.xAxis.x = this.x;
-                this.xAxis.y = this.yAxis.getValuePosition({
+                this.yCoordinate.y = this.y;
+                this.xCoordinate.x = this.x;
+                this.xCoordinate.y = this.yCoordinate.getValuePosition({
                     x: this.x, 
                     y: this.y
                 }, this.origin.y).y;
             };
 
             CartesianCoordinate.prototype.drawGrid = function () {
-                var yMin = this.yAxis.getMin();
-                var yMax = this.yAxis.getMax();
+                var yMin = this.yCoordinate.getMin();
+                var yMax = this.yCoordinate.getMax();
                 for (var i = yMin; i <= yMax; i++) {
-                    var y = this.yAxis.getValuePosition({
+                    var y = this.yCoordinate.getValuePosition({
                         x: this.x, 
                         y: this.y
                     }, i).y;
                     canvas.line({
                         x1: this.x,
                         y1: y,
-                        x2: this.x + this.xAxis.getLineWidth(),
+                        x2: this.x + this.xCoordinate.getLineWidth(),
                         y2: y,
                         stroke_width: 0.5
                     });
                 }
-                var xMin = this.xAxis.getMin();
-                var xMax = this.xAxis.getMax();
+                var xMin = this.xCoordinate.getMin();
+                var xMax = this.xCoordinate.getMax();
                 for (var i = xMin; i <= xMax; i++) {
-                    var x = this.xAxis.getValuePosition({
+                    var x = this.xCoordinate.getValuePosition({
                         x: this.x, 
                         y: this.y
                     }, i).x;
@@ -199,15 +199,15 @@
                         x1: x,
                         y1: this.y,
                         x2: x,
-                        y2: this.y + this.yAxis.getLineWidth(),
+                        y2: this.y + this.yCoordinate.getLineWidth(),
                         stroke_width: 0.5
                     });
                 }
             };
 
             CartesianCoordinate.prototype.draw = function (points) {
-                this.xAxis.draw();
-                this.yAxis.draw();
+                this.xCoordinate.draw();
+                this.yCoordinate.draw();
                 this.drawGrid();
                 this.drawPoints(points);
                 this.drawPath(points);
@@ -216,8 +216,8 @@
             CartesianCoordinate.prototype.drawPoints = function (points) {
                 for (var i = 0; i < points.length; i++) {
                     var point = points[i];
-                    var xPos = this.xAxis.getValuePosition({x: this.x, y: this.y}, point.x).x;
-                    var yPos = this.yAxis.getValuePosition({x: this.x, y: this.y}, point.y).y;
+                    var xPos = this.xCoordinate.getValuePosition({x: this.x, y: this.y}, point.x).x;
+                    var yPos = this.yCoordinate.getValuePosition({x: this.x, y: this.y}, point.y).y;
                     canvas.circle({x: xPos, y: yPos});
                 }
 
@@ -227,8 +227,8 @@
                 var coordinates = [];
                 for (var i = 0; i < points.length; i++) {
                     var point = points[i];
-                    var xPos = this.xAxis.getValuePosition({x: this.x, y: this.y}, point.x).x;
-                    var yPos = this.yAxis.getValuePosition({x: this.x, y: this.y}, point.y).y;
+                    var xPos = this.xCoordinate.getValuePosition({x: this.x, y: this.y}, point.x).x;
+                    var yPos = this.yCoordinate.getValuePosition({x: this.x, y: this.y}, point.y).y;
                     coordinates.push({x: xPos, y: yPos});
                 }
                 canvas.path({points: coordinates});
