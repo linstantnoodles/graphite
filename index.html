@@ -4,12 +4,56 @@
         <meta charset="utf-8">
        </head>
     <body>
+        <section>
+            <input type="text" name="wow">
+        </section>
         <svg id="mysvg" width="1000px" height="1000px" xmlns="http://www.w3.org/2000/svg">
         </svg>
      <script>
+            var SVGCreator = function (id) {
+                this.svgElement = document.getElementById(id);
+            };
+
+            SVGCreator.prototype.circle = function (options) {
+                // Set defaults
+                var C = document.createElementNS("http://www.w3.org/2000/svg","circle");
+                C.setAttributeNS(null,"r", 5);
+                C.setAttributeNS(null,"cx", x);
+                C.setAttributeNS(null,"cy", y);
+                C.setAttributeNS(null,"stroke", "red");
+                svgEl.appendChild(C);
+            };
+           
+            // Logic belongs in thing
+            SVGCreator.prototype.line = function (options) {
+                // Set defaults
+                var C= document.createElementNS("http://www.w3.org/2000/svg","line");
+                C.setAttributeNS(null,"x1", origin.x);
+                C.setAttributeNS(null,"y1", origin.y);
+                C.setAttributeNS(null,"x2", origin.x + width);
+                C.setAttributeNS(null,"y2", origin.y);
+                C.setAttributeNS(null,"stroke", "black");
+                C.setAttributeNS(null,"stroke-width", strokeWidth);
+                svgEl.appendChild(C);
+            };
+
+            SVGCreator.prototype.path = function (options) {
+                var C= document.createElementNS("http://www.w3.org/2000/svg","path");
+                var initialPoint = points[0];
+                var pathString = "M " + initialPoint.x + " " + initialPoint.y + " L ";
+                for (var i = 1; i < points.length; i++) {
+                    pathString += points[i].x + " " + points[i].y + " ";
+                }
+                C.setAttributeNS(null,"stroke", "red");
+                C.setAttributeNS(null, "d", pathString);
+                C.setAttributeNS(null, "fill", "none");
+                svgEl.appendChild(C);
+            };
 
             // Dot painter
             var svgEl = document.getElementById("mysvg");
+            var canvas = new SVGCreator("mysvg");
+
             function drawCircle (x, y) {
                 console.log(x);
                 console.log(y);
@@ -21,28 +65,21 @@
                 svgEl.appendChild(C);
             }
 
-            function drawLine (origin, width, orientation, strokeWidth) {
-                strokeWidth = strokeWidth || 1;
-                if (orientation === "horizontal") {
-                    var C= document.createElementNS("http://www.w3.org/2000/svg","line");
-                    C.setAttributeNS(null,"x1", origin.x);
-                    C.setAttributeNS(null,"y1", origin.y);
-                    C.setAttributeNS(null,"x2", origin.x + width);
-                    C.setAttributeNS(null,"y2", origin.y);
-                    C.setAttributeNS(null,"stroke", "black");
-                    C.setAttributeNS(null,"stroke-width", strokeWidth);
-                    svgEl.appendChild(C);
-                } else {
-                    // Origin begins at tail
-                    var C= document.createElementNS("http://www.w3.org/2000/svg","line");
-                    C.setAttributeNS(null,"x1", origin.x);
-                    C.setAttributeNS(null,"y1", origin.y);
-                    C.setAttributeNS(null,"x2", origin.x);
-                    C.setAttributeNS(null,"y2", origin.y + width);
-                    C.setAttributeNS(null,"stroke", "black");
-                    C.setAttributeNS(null,"stroke-width", strokeWidth);
-                    svgEl.appendChild(C);
-                }
+            function drawLine (options) {
+                var x1 = options.x1;
+                var y1 = options.y1;
+                var x2 = options.x2;
+                var y2 = options.y2;
+                var strokeWidth = options.stroke_width || 1;
+
+                var C = document.createElementNS("http://www.w3.org/2000/svg","line");
+                C.setAttributeNS(null,"x1", x1);
+                C.setAttributeNS(null,"y1", y1);
+                C.setAttributeNS(null,"x2", x2);
+                C.setAttributeNS(null,"y2", y2);
+                C.setAttributeNS(null,"stroke", "black");
+                C.setAttributeNS(null,"stroke-width", strokeWidth);
+                svgEl.appendChild(C);
             }
 
             function drawPath (points) {
@@ -58,6 +95,7 @@
                 svgEl.appendChild(C);
             }
 
+            // How to make this x, y independent of the canvas?
             var Axis = function (config) {
                 this.x = config.x;
                 this.y = config.y;
@@ -77,7 +115,7 @@
                 return this.lineWidth;
             };
 
-            Axis.prototype.valuePos = function (origin, value) {
+            Axis.prototype.getValuePosition = function (origin, value) {
                 var distanceFromOrigin = (value - this.getMin()) * this.gapSize;
                 if (this.orientation === "horizontal") {
                     var posX = origin.x + distanceFromOrigin;
@@ -90,10 +128,24 @@
 
             Axis.prototype.draw = function (values) {
                 values = values || [];
-                drawLine({x: this.x, y: this.y}, this.lineWidth, this.orientation);
+                if (this.orientation === "horizontal") {
+                    drawLine({
+                        x1: this.x, 
+                        y1: this.y,
+                        x2: this.x + this.lineWidth,
+                        y2: this.y
+                    });
+                } else {
+                    drawLine({
+                        x1: this.x,
+                        y1: this.y,
+                        x2: this.x, 
+                        y2: this.y + this.lineWidth
+                    });
+                }
                 for (var i = 0; i < values.length; i++) {
                     var value = this.values[i];
-                    var pos = this.valuePos({x: this.x, y: this.y}, value);
+                    var pos = this.getValuePosition({x: this.x, y: this.y}, value);
                     drawCircle(pos.x, pos.y);
                 }
             };
@@ -124,13 +176,13 @@
                     orientation: "vertical",
                     range: this.yRange
                 });
-                this.yAxis.x = this.xAxis.valuePos({
+                this.yAxis.x = this.xAxis.getValuePosition({
                     x: this.x, 
                     y: this.y
                 }, this.origin.x).x;
                 this.yAxis.y = this.y;
                 this.xAxis.x = this.x;
-                this.xAxis.y = this.yAxis.valuePos({
+                this.xAxis.y = this.yAxis.getValuePosition({
                     x: this.x, 
                     y: this.y
                 }, this.origin.y).y;
@@ -140,24 +192,32 @@
                 var yMin = this.yAxis.getMin();
                 var yMax = this.yAxis.getMax();
                 for (var i = yMin; i <= yMax; i++) {
-                    drawLine({
+                    var y = this.yAxis.getValuePosition({
                         x: this.x, 
-                        y: this.yAxis.valuePos({
-                            x: this.x, 
-                            y: this.y
-                        }, i).y
-                    }, this.xAxis.getLineWidth(), "horizontal", 0.5);
+                        y: this.y
+                    }, i).y;
+                    drawLine({
+                        x1: this.x,
+                        y1: y,
+                        x2: this.x + this.xAxis.getLineWidth(),
+                        y2: y,
+                        stroke_width: 0.5
+                    });
                 }
                 var xMin = this.xAxis.getMin();
                 var xMax = this.xAxis.getMax();
                 for (var i = xMin; i <= xMax; i++) {
+                    var x = this.xAxis.getValuePosition({
+                        x: this.x, 
+                        y: this.y
+                    }, i).x;
                     drawLine({
-                        x: this.xAxis.valuePos({
-                            x: this.x, 
-                            y: this.y
-                        }, i).x,
-                        y: this.y, 
-                    }, this.yAxis.getLineWidth(), "vertical", 0.5);
+                        x1: x,
+                        y1: this.y,
+                        x2: x,
+                        y2: this.y + this.yAxis.getLineWidth(),
+                        stroke_width: 0.5
+                    });
                 }
             };
 
@@ -171,8 +231,8 @@
             CartesianCoordinate.prototype.drawPoints = function (points) {
                 for (var i = 0; i < points.length; i++) {
                     var point = points[i];
-                    var xPos = this.xAxis.valuePos({x: this.x, y: this.y}, point.x).x;
-                    var yPos = this.yAxis.valuePos({x: this.x, y: this.y}, point.y).y;
+                    var xPos = this.xAxis.getValuePosition({x: this.x, y: this.y}, point.x).x;
+                    var yPos = this.yAxis.getValuePosition({x: this.x, y: this.y}, point.y).y;
                     drawCircle(xPos, yPos);
                 }
 
@@ -182,8 +242,8 @@
                 var coordinates = [];
                 for (var i = 0; i < points.length; i++) {
                     var point = points[i];
-                    var xPos = this.xAxis.valuePos({x: this.x, y: this.y}, point.x).x;
-                    var yPos = this.yAxis.valuePos({x: this.x, y: this.y}, point.y).y;
+                    var xPos = this.xAxis.getValuePosition({x: this.x, y: this.y}, point.x).x;
+                    var yPos = this.yAxis.getValuePosition({x: this.x, y: this.y}, point.y).y;
                     coordinates.push({x: xPos, y: yPos});
                 }
                 drawPath(coordinates);
