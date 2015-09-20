@@ -95,59 +95,27 @@
                 svgEl.appendChild(C);
             }
 
-            // How to make this x, y independent of the canvas?
             var Axis = function (config) {
                 this.x = config.x;
                 this.y = config.y;
                 this.width = config.width;
                 this.values = config.values || [];
-                this.orientation = config.orientation; // horizontal or vertical
                 this.range = config.range;
-                var gapSize = Math.floor(this.width / (this.getMax() - this.getMin()));
-                var diff = this.width - (gapSize * (this.getMax() - this.getMin()));
-                // Since some may not evenly divide the max may not always be at the end
-                var lineWidth = this.width - diff;
-                this.gapSize = gapSize;
-                this.lineWidth = lineWidth;
             };
 
+            // Distance between each value on the axis
+            Axis.prototype.getIntervalWidth = function () {
+                return Math.floor(this.width / (this.getMax() - this.getMin()));
+            };
+
+            // Since some may not evenly divide the max may not always be at the end
+            // This is the actual width of the line
             Axis.prototype.getLineWidth = function () {
-                return this.lineWidth;
+                return  this.width - (this.width - (this.getIntervalWidth() * (this.getMax() - this.getMin())));
             };
 
-            Axis.prototype.getValuePosition = function (origin, value) {
-                var distanceFromOrigin = (value - this.getMin()) * this.gapSize;
-                if (this.orientation === "horizontal") {
-                    var posX = origin.x + distanceFromOrigin;
-                    return {x: posX, y: origin.y};
-                } else {
-                    var posY = (origin.y + this.lineWidth) - distanceFromOrigin;
-                    return {x: origin.x, y: posY};
-                }
-            };
-
-            Axis.prototype.draw = function (values) {
-                values = values || [];
-                if (this.orientation === "horizontal") {
-                    drawLine({
-                        x1: this.x, 
-                        y1: this.y,
-                        x2: this.x + this.lineWidth,
-                        y2: this.y
-                    });
-                } else {
-                    drawLine({
-                        x1: this.x,
-                        y1: this.y,
-                        x2: this.x, 
-                        y2: this.y + this.lineWidth
-                    });
-                }
-                for (var i = 0; i < values.length; i++) {
-                    var value = this.values[i];
-                    var pos = this.getValuePosition({x: this.x, y: this.y}, value);
-                    drawCircle(pos.x, pos.y);
-                }
+            Axis.prototype.getDistanceFromOrigin = function (value) {
+                return (value - this.getMin()) * this.getIntervalWidth();
             };
 
             Axis.prototype.getMin = function () {
@@ -158,6 +126,62 @@
                 return (this.range) ? this.range.max : Math.max.apply(null, this.values);
             };
 
+            var XAxis = function (config) {
+                Axis.call(this, config);
+            };
+
+            XAxis.prototype = Object.create(Axis.prototype);
+
+            XAxis.prototype.draw = function (values) {
+                values = values || [];
+                drawLine({
+                    x1: this.x, 
+                    y1: this.y,
+                    x2: this.x + this.getLineWidth(),
+                    y2: this.y
+                });
+                for (var i = 0; i < values.length; i++) {
+                    var value = this.values[i];
+                    var pos = this.getValuePosition({x: this.x, y: this.y}, value);
+                    drawCircle(pos.x, pos.y);
+                }
+
+            };
+
+            XAxis.prototype.getValuePosition = function (origin, value) {
+                var posX = origin.x + this.getDistanceFromOrigin(value);
+                return {
+                    x: posX,
+                    y: origin.y
+                };
+            };
+
+            var YAxis = function (config) {
+                Axis.call(this, config);
+            };
+
+            YAxis.prototype = Object.create(Axis.prototype);
+
+            YAxis.prototype.draw = function (values) {
+                values = values || [];
+                drawLine({
+                    x1: this.x,
+                    y1: this.y,
+                    x2: this.x, 
+                    y2: this.y + this.getLineWidth()
+                });
+                for (var i = 0; i < values.length; i++) {
+                    var value = this.values[i];
+                    var pos = this.getValuePosition({x: this.x, y: this.y}, value);
+                    drawCircle(pos.x, pos.y);
+                }
+            };
+
+            YAxis.prototype.getValuePosition = function (origin, value) {
+                var posY = (origin.y + this.getLineWidth()) - this.getDistanceFromOrigin(value);
+                return {x: origin.x, y: posY};
+            };
+
             var CartesianCoordinate = function (config) {
                 this.x = config.x;
                 this.y = config.y;
@@ -166,14 +190,12 @@
                 this.xRange = config.x_range;
                 this.yRange = config.y_range;
                 this.origin = config.origin;
-                this.xAxis = new Axis({
+                this.xAxis = new XAxis({
                     width: this.xWidth, 
-                    orientation: "horizontal",
                     range: this.xRange
                 });
-                this.yAxis = new Axis({
+                this.yAxis = new YAxis({
                     width: this.yWidth,
-                    orientation: "vertical",
                     range: this.yRange
                 });
                 this.yAxis.x = this.xAxis.getValuePosition({
