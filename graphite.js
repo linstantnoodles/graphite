@@ -40,20 +40,19 @@
 
   PolarXCoordinate.prototype = Object.create(Axis.prototype);
 
-  PolarXCoordinate.prototype.draw = function (values) {
+  PolarXCoordinate.prototype.circles = function (values) {
     values = values || [];
-    canvas.line({
-      x1: this.x, 
-      y1: this.y,
-      x2: this.x + this.getLineWidth(),
-      y2: this.y
-    });
     for (var i = 0; i < values.length; i++) {
       var value = this.values[i];
-      var pos = this.getValuePosition({x: this.x, y: this.y}, value);
-      canvas.circle({x: pos.x, y: pos.y});
+      var pos = this.getValuePosition({
+        x: this.x,
+        y: this.y
+      }, value);
+      canvas.circle({
+        x: pos.x, 
+        y: pos.y
+      });
     }
-
   };
 
   PolarXCoordinate.prototype.getValuePosition = function (origin, value) {
@@ -64,30 +63,53 @@
     };
   };
 
+  PolarXCoordinate.prototype.draw = function (values) {
+    canvas.line({
+      x1: this.x, 
+      y1: this.y,
+      x2: this.x + this.getLineWidth(),
+      y2: this.y
+    });
+    this.circles();
+  };
+
   var PolarYCoordinate = function (config) {
     Axis.call(this, config);
   };
 
   PolarYCoordinate.prototype = Object.create(Axis.prototype);
+  
+  PolarYCoordinate.prototype.circles = function (values) {
+    values = values || [];
+    for (var i = 0; i < values.length; i++) {
+      var value = this.values[i];
+      var pos = this.getValuePosition({
+        x: this.x,
+        y: this.y
+      }, value);
+      canvas.circle({
+        x: pos.x, 
+        y: pos.y
+      });
+    }
+  };
+
+  PolarYCoordinate.prototype.getValuePosition = function (origin, value) {
+    var posY = (origin.y + this.getLineWidth()) - this.getDistanceFromOrigin(value);
+    return {
+      x: origin.x, 
+      y: posY
+    };
+  };
 
   PolarYCoordinate.prototype.draw = function (values) {
-    values = values || [];
     canvas.line({
       x1: this.x,
       y1: this.y,
       x2: this.x, 
       y2: this.y + this.getLineWidth()
     });
-    for (var i = 0; i < values.length; i++) {
-      var value = this.values[i];
-      var pos = this.getValuePosition({x: this.x, y: this.y}, value);
-      canvas.circle({x: pos.x, y: pos.y});
-    }
-  };
-
-  PolarYCoordinate.prototype.getValuePosition = function (origin, value) {
-    var posY = (origin.y + this.getLineWidth()) - this.getDistanceFromOrigin(value);
-    return {x: origin.x, y: posY};
+    this.circles();
   };
 
   var CartesianCoordinate = function (config) {
@@ -118,7 +140,7 @@
     }, this.origin.y).y;
   };
 
-  CartesianCoordinate.prototype.drawGrid = function () {
+  CartesianCoordinate.prototype.grid = function () {
     var yMin = this.yCoordinate.getMin();
     var yMax = this.yCoordinate.getMax();
     for (var i = yMin; i <= yMax; i++) {
@@ -151,37 +173,54 @@
     }
   };
 
-  CartesianCoordinate.prototype.draw = function (points) {
-    this.xCoordinate.draw();
-    this.yCoordinate.draw();
-    this.drawGrid();
-    this.drawPoints(points);
-    this.drawPath(points);
-  };
-
-  CartesianCoordinate.prototype.drawPoints = function (points) {
+  CartesianCoordinate.prototype.circles = function (points) {
     for (var i = 0; i < points.length; i++) {
       var point = points[i];
-      var xPos = this.xCoordinate.getValuePosition({x: this.x, y: this.y}, point.x).x;
-      var yPos = this.yCoordinate.getValuePosition({x: this.x, y: this.y}, point.y).y;
+      var xPos = this.xCoordinate.getValuePosition({
+        x: this.x, 
+        y: this.y
+      }, point.x).x;
+      var yPos = this.yCoordinate.getValuePosition({
+        x: this.x, 
+        y: this.y
+      }, point.y).y;
       canvas.circle({
         x: xPos,
         y: yPos
       });
     }
-
   };
 
-  CartesianCoordinate.prototype.drawPath = function (points) {
+  CartesianCoordinate.prototype.path = function (points) {
     var coordinates = [];
     for (var i = 0; i < points.length; i++) {
       var point = points[i];
-      var xPos = this.xCoordinate.getValuePosition({x: this.x, y: this.y}, point.x).x;
-      var yPos = this.yCoordinate.getValuePosition({x: this.x, y: this.y}, point.y).y;
-      coordinates.push({x: xPos, y: yPos});
+      var xPos = this.xCoordinate.getValuePosition({
+        x: this.x, 
+        y: this.y
+      }, point.x).x;
+      var yPos = this.yCoordinate.getValuePosition({
+        x: this.x, 
+        y: this.y
+      }, point.y).y;
+      coordinates.push({
+        x: xPos, 
+        y: yPos
+      });
     }
-    canvas.path({points: coordinates});
+    canvas.path({
+      points: coordinates
+    });
   }; 
+
+  CartesianCoordinate.prototype.draw = function (points) {
+    this.xCoordinate.draw();
+    this.yCoordinate.draw();
+    this.grid();
+    this.circles(points);
+    this.path(points);
+  };
+
 
   window.Graphite = {
     PolarXCoordinate: PolarXCoordinate,
