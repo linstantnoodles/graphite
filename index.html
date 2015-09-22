@@ -18,7 +18,10 @@
         <svg id="mysvg" width="1000px" height="1000px" xmlns="http://www.w3.org/2000/svg">
         </svg>
         <script type="text/javascript" src="graphite.js"></script>
+        <script type="text/javascript" src="svg-canvas.js"></script>
         <script>
+            Graphite.init(new SVGCanvas("mysvg"));
+
             var cartesianConfig = {
                 x: 10,
                 y: 10,
@@ -29,7 +32,7 @@
                 origin: {x: 0, y: 0}
             };
 
-            var x = new CartesianCoordinate(cartesianConfig);
+            var x = new Graphite.CartesianCoordinate(cartesianConfig);
 
             x.draw([
                 {x: 1, y: 2},
