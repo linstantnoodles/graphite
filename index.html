@@ -46,8 +46,7 @@
         <script type="text/javascript" src="graphite.js"></script>
         <script type="text/javascript" src="svg-canvas.js"></script>
         <script>
-            var submitEl = document.getElementById("update-btn");
-            submitEl.addEventListener("click", function (e) {
+            function draw() {
                 var inputs = document.getElementsByTagName("input");
                 var config = {};
                 for (var i = 0; i < inputs.length; i++) {
@@ -73,7 +72,14 @@
 
                 var points = JSON.parse(document.getElementById("points").value);
                 (new Graphite.CartesianCoordinate(config)).draw(points);
+            }
+
+            var submitEl = document.getElementById("update-btn");
+            submitEl.addEventListener("click", function (e) {
+                draw();
             });
+
+            draw();
         </script>
     </body>
 </html>
