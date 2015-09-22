@@ -2,20 +2,44 @@
 <html>
     <head>
         <meta charset="utf-8">
+        <style type="text/css"> 
+            .config-values {
+                float: left;
+            }
+            .config-values label {
+                display: block;
+            }
+            textarea {
+                float: right;
+                height: 500px;
+            }
+            #form {
+                float: left;
+                width: 30%;
+            }
+            #mysvg {
+                float: right;
+                width: 67%;
+                height: 500px;
+                border: 1px solid red;
+            }
+        </style>
     </head>
     <body>
-        <section>
-            <label>x</label><input type="text" name="x">
-            <label>y</label><input type="text" name="y">
-            <label>x_width</label><input type="text" name="x_width">
-            <label>y_width</label><input type="text" name="y_width">
-            <label>x_range</label><input type="text" name="x_range">
-            <label>y_range</label><input type="text" name="y_range">
-            <label>origin</label><input type="text" name="origin">
-            <textarea name="points"></textarea>
+        <div id="form">
+            <div class="config-values">
+                <label>x</label><input type="text" name="x">
+                <label>y</label><input type="text" name="y">
+                <label>x_width</label><input type="text" name="x_width">
+                <label>y_width</label><input type="text" name="y_width">
+                <label>x_range</label><input type="text" name="x_range">
+                <label>y_range</label><input type="text" name="y_range">
+                <label>origin</label><input type="text" name="origin">
+            </div>
+            <textarea name="points" placeholder="Points"></textarea>
             <button type="submit" name="submit">Update</button>
-        </section>
-        <svg id="mysvg" width="1000px" height="1000px" xmlns="http://www.w3.org/2000/svg">
+        </div>
+        <svg id="mysvg" xmlns="http://www.w3.org/2000/svg">
         </svg>
         <script type="text/javascript" src="graphite.js"></script>
         <script type="text/javascript" src="svg-canvas.js"></script>
