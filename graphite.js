@@ -131,7 +131,7 @@
         y1: y,
         x2: this.x + this.xCoordinate.getLineWidth(),
         y2: y,
-        stroke_width: 0.5
+        stroke_width: 0.2
       });
     }
     var xMin = this.xCoordinate.getMin();
@@ -146,7 +146,7 @@
         y1: this.y,
         x2: x,
         y2: this.y + this.yCoordinate.getLineWidth(),
-        stroke_width: 0.5
+        stroke_width: 0.2
       });
     }
   };
