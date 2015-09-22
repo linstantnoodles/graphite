@@ -28,42 +28,52 @@
     <body>
         <div id="form">
             <div class="config-values">
-                <label>x</label><input type="text" name="x">
-                <label>y</label><input type="text" name="y">
-                <label>x_width</label><input type="text" name="x_width">
-                <label>y_width</label><input type="text" name="y_width">
-                <label>x_range</label><input type="text" name="x_range">
-                <label>y_range</label><input type="text" name="y_range">
-                <label>origin</label><input type="text" name="origin">
+                <label>x</label><input type="text" value="0" name="x">
+                <label>y</label><input type="text" value="0" name="y">
+                <label>x_width</label><input type="text" value="300" name="x_width">
+                <label>y_width</label><input type="text" value="300" name="y_width">
+                <label>x_range</label><input type="text" value='{"min": -5, "max": 20}' name="x_range">
+                <label>y_range</label><input type="text" value='{"min": -5, "max": 20}' name="y_range">
+                <label>origin</label><input type="text" value='{"x": 0, "y": 0}' name="origin">
             </div>
-            <textarea name="points" placeholder="Points"></textarea>
-            <button type="submit" name="submit">Update</button>
+            <textarea id="points" name="points" placeholder="Points">[{"x": 5, "y": 12}, {"x": 6, "y": 15}]</textarea>
+            <button id="update-btn" type="submit" name="submit">Update</button>
         </div>
-        <svg id="mysvg" xmlns="http://www.w3.org/2000/svg">
-        </svg>
+        <div id="canvas">
+            <svg id="mysvg" xmlns="http://www.w3.org/2000/svg">
+            </svg>
+        </div>
         <script type="text/javascript" src="graphite.js"></script>
         <script type="text/javascript" src="svg-canvas.js"></script>
         <script>
-            Graphite.init(new SVGCanvas("mysvg"));
+            var submitEl = document.getElementById("update-btn");
+            submitEl.addEventListener("click", function (e) {
+                var inputs = document.getElementsByTagName("input");
+                var config = {};
+                for (var i = 0; i < inputs.length; i++) {
+                    var input = inputs[i];
+                    var inputName = input.name;
+                    var inputValue = input.value;
+                    if (inputValue.indexOf("{") >= 0) {
+                        config[inputName] = JSON.parse(inputValue)
+                    } else {
+                        config[inputName] = ++inputValue;
+                    }
+                }
+                var canvasEl = document.getElementById("canvas");
+                canvasEl.innerHTML = "";
 
-            var cartesianConfig = {
-                x: 10,
-                y: 10,
-                x_width: 300,
-                y_width: 300,
-                x_range: {min: -5, max: 5},
-                y_range: {min: -5, max: 5},
-                origin: {x: 0, y: 0}
-            };
+                var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute('id', "mysvg");
+                svg.setAttribute('style', 'border: 1px solid black');
+                svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+                canvasEl.appendChild(svg);
 
-            var x = new Graphite.CartesianCoordinate(cartesianConfig);
+                Graphite.init(new SVGCanvas("mysvg"));
 
-            x.draw([
-                {x: 1, y: 2},
-                {x: 2, y: 2.5}, 
-                {x: 3, y: 3},
-                {x: 4, y: 5}
-            ]);
+                var points = JSON.parse(document.getElementById("points").value);
+                (new Graphite.CartesianCoordinate(config)).draw(points);
+            });
         </script>
     </body>
 </html>
