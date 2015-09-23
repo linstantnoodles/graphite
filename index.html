@@ -6,17 +6,21 @@
             .config-values {
                 float: left;
             }
+
             .config-values label {
                 display: block;
             }
+
             textarea {
                 float: right;
                 height: 500px;
             }
+
             #form {
                 float: left;
                 width: 30%;
             }
+
             #mysvg {
                 float: right;
                 width: 67%;
@@ -37,7 +41,7 @@
                 <label>origin</label><input type="text" value='{"x": 0, "y": 0}' name="origin">
             </div>
             <textarea id="points" name="points" placeholder="Points">[{"x": 5, "y": 12}, {"x": 6, "y": 15}]</textarea>
-            <button id="update-btn" type="submit" name="submit">Update</button>
+            <button id="update-btn" type="submit" name="submit">Update Canvas</button>
         </div>
         <div id="canvas">
             <svg id="mysvg" xmlns="http://www.w3.org/2000/svg">
@@ -48,6 +52,7 @@
         <script>
             function draw() {
                 var inputs = document.getElementsByTagName("input");
+                // Get configuration values
                 var config = {};
                 for (var i = 0; i < inputs.length; i++) {
                     var input = inputs[i];
@@ -59,18 +64,18 @@
                         config[inputName] = ++inputValue;
                     }
                 }
+                // Get coordinates
+                var points = JSON.parse(document.getElementById("points").value);
+                // Create canvas
                 var canvasEl = document.getElementById("canvas");
                 canvasEl.innerHTML = "";
-
                 var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                 svg.setAttribute('id', "mysvg");
                 svg.setAttribute('style', 'border: 1px solid black');
                 svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
                 canvasEl.appendChild(svg);
-
+                // Graph!
                 Graphite.init(new SVGCanvas("mysvg"));
-
-                var points = JSON.parse(document.getElementById("points").value);
                 (new Graphite.CartesianCoordinate(config)).draw(points);
             }
 
@@ -78,7 +83,6 @@
             submitEl.addEventListener("click", function (e) {
                 draw();
             });
-
             draw();
         </script>
     </body>
